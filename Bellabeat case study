@@ -1,0 +1,122 @@
+SELECT  distinct Id, COUNT(distinct Id)
+ FROM `capstone-project-377109.Activity_data.Daily_activity` 
+ GROUP BY  id
+ HAVING COUNT (Id) > 1
+Result = 33 users
+ 
+
+SELECT distinct Id, COUNT(distinct Id)
+ FROM `capstone-project-377109.Activity_data.hourly_intensity` 
+ GROUP BY id
+ HAVING COUNT(Id) > 1
+Result = 33 users
+ 
+SELECT distinct Id, COUNT(distinct Id)
+ FROM `capstone-project-377109.Activity_data.Sleep_day` 
+ GROUP BY id
+ HAVING COUNT(Id) > 1
+Result = 23 users
+ 
+SELECT distinct Id, COUNT(distinct Id)
+ FROM `capstone-project-377109.Activity_data.Daily_steps` 
+ GROUP BY id
+ HAVING COUNT(Id) > 1
+Result = 33 users
+
+DECLARE
+ TIMESTAMP_REGEX STRING DEFAULT r'^\d{4}-\d{1,2}-\d{1,2}[T ]\d{1,2}:\d{1,2}:\d{1,2}(\.\d{1,6})? *(([+-]\d{1,2}(:\d{1,2})?)|Z|UTC)?$';
+DECLARE
+ DATE_REGEX STRING DEFAULT r'^\d{4}-(?:[1-9]|0[1-9]|1[012])-(?:[1-9]|0[1-9]|[12][0-9]|3[01])$';
+DECLARE
+ TIME_REGEX STRING DEFAULT r'^\d{1,2}:\d{1,2}:\d{1,2}(\.\d{1,6})?$';
+DECLARE
+ MORNING_START,
+ MORNING_END,
+ AFTERNOON_END,
+ EVENING_END INT64;
+ 
+SET
+ MORNING_START = 6;
+SET
+ MORNING_END = 12;
+SET
+ AFTERNOON_END = 18;
+SET
+ EVENING_END = 21;
+
+
+
+
+Then we have to check for common columns among the tables.
+
+ SELECT
+ column_name,
+ COUNT(table_name)
+FROM
+ `capstone-project-377109.Activity_data.INFORMATION_SCHEMA.COLUMNS` 
+GROUP BY
+ 1;
+
+
+SELECT
+ column_name,
+ data_type,
+ COUNT(table_name) AS table_count
+FROM
+ `capstone-project-377109.Activity_data.INFORMATION_SCHEMA.COLUMNS`
+WHERE
+ REGEXP_CONTAINS(LOWER(table_name),"day|daily")
+GROUP BY
+ 1,
+ 2;
+ 
+ 
+ SELECT
+ A.Id,
+ * EXCEPT(Id,
+   Calories,
+   ActivityDay,
+   SleepDay,
+   SedentaryMinutes,
+   LightlyActiveMinutes,
+   FairlyActiveMinutes,
+   VeryActiveMinutes,
+   SedentaryActiveDistance,
+   LightActiveDistance,
+   ModeratelyActiveDistance,
+   VeryActiveDistance),
+ I.SedentaryMinutes,
+ I.LightlyActiveMinutes,
+ I.FairlyActiveMinutes,
+ I.VeryActiveMinutes,
+ I.SedentaryActiveDistance,
+ I.LightActiveDistance,
+ I.ModeratelyActiveDistance,
+ I.VeryActiveDistance
+FROM
+ `capstone-project-377109.Activity_data.Daily_activity` A
+LEFT JOIN
+ `capstone-project-377109.Activity_data.Daily_steps` C
+ON
+ A.Id = C.Id
+ AND A.ActivityDate=C.ActivityDay
+LEFT JOIN
+`capstone-project-377109.Activity_data.Daily_intensity` I
+ON
+ A.Id = I.Id
+ AND A.FairlyActiveMinutes = I.FairlyActiveMinutes
+ AND A.LightActiveDistance = I.LightActiveDistance
+ AND A.LightlyActiveMinutes = I.LightlyActiveMinutes
+ AND A.ModeratelyActiveDistance = I.ModeratelyActiveDistance
+ AND A.SedentaryActiveDistance = I.SedentaryActiveDistance
+ AND A.SedentaryMinutes = I.SedentaryMinutes
+ AND A.VeryActiveDistance = I.VeryActiveDistance
+ AND A.VeryActiveMinutes = I.VeryActiveMinutes
+LEFT JOIN
+`capstone-project-377109.Activity_data.Sleep_day` Sl
+ON
+ A.Id = Sl.Id
+ AND A.ActivityDate=Sl.SleepDay;
+
+
+This query returns the table's joins.
